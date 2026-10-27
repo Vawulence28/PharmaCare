@@ -1,0 +1,6 @@
+{
+  "name": "drug-inventory-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo root for PharmaCare"
+}
