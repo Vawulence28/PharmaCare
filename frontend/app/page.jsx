@@ -9,6 +9,8 @@ import { Loading } from '@/components/ui/Loading';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { fetchFromApi } from '@/utils/api';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Pill, 
@@ -22,6 +24,8 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,16 +39,26 @@ export default function DashboardPage() {
       setSummary(data.data);
     } catch (err) {
       setError(err.message);
+      // If unauthorized, redirect to login
+      if (err.message.includes('Unauthorized') || err.message.includes('session')) {
+        router.push('/login');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (!authLoading && !user) {
+      router.push('/login');
+      return;
+    }
+    if (user) {
+      loadDashboard();
+    }
+  }, [user, authLoading]);
 
-  if (loading && !summary) {
+  if (authLoading || (loading && !summary && !error)) {
     return (
       <Layout>
         <PageHeader title="Dashboard & Inventory Summary" description="Loading real-time pharmacy analytics and alerts..." />
@@ -58,15 +72,19 @@ export default function DashboardPage() {
       <Layout>
         <PageHeader title="Dashboard & Inventory Summary" description="Real-time pharmacy analytics and alerts." />
         <ErrorMessage title="Failed to Load Dashboard" message={error} />
-        <div className="mt-4">
+        <div className="mt-4 flex space-x-3">
           <Button onClick={loadDashboard} className="flex items-center space-x-2">
             <RefreshCw className="w-4 h-4" />
             <span>Retry Connection</span>
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/login')}>
+            Go to Login
           </Button>
         </div>
       </Layout>
     );
   }
+
 
   const metrics = summary?.metrics || {};
   const usableStockByUnit = summary?.usableStockByUnit || [];
