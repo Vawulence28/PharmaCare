@@ -1,0 +1,10 @@
+{
+  "name": "drug-inventory-monorepo",
+  "version": "1.0.0",
+  "description": "Unified Drug Inventory Management System",
+  "scripts": {
+    "install-all": "npm install --prefix backend && npm install --prefix frontend",
+    "build": "npm run build --prefix frontend && npm run build --prefix backend",
+    "start": "node backend/src/server.js"
+  }
+}
