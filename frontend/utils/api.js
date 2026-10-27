@@ -1,7 +1,7 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function fetchFromApi(endpoint, options = {}) {
-  // If endpoint already starts with /api, avoid duplication
+  // Ensure we don't duplicate /api if the endpoint already includes it
   const cleanEndpoint = endpoint.startsWith('/api') ? endpoint.replace('/api', '') : endpoint;
   const url = `${API_BASE_URL}${cleanEndpoint}`;
   

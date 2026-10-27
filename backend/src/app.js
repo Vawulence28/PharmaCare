@@ -2,8 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const sessionConfig = require('./config/session');
-const path = require('path');
-
 
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { apiLimiter, loginLimiter } = require('./middleware/rateLimiter');
@@ -19,21 +17,12 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'"],
-      },
-    },
-  })
-);
+app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    process.env.FRONTEND_URL // Add your Vercel production URL here (e.g., https://your-app.vercel.app)
+  ],
   credentials: true,
 }));
 
@@ -42,10 +31,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(sessionConfig);
 
-// Apply general API rate limiter
+// Apply rate limiters & routes
 app.use('/api/', apiLimiter);
-
-// Apply strict rate limiter specifically to login endpoint
 app.use('/api/auth/login', loginLimiter);
 
 app.get('/api/health', (req, res) => {
@@ -62,16 +49,6 @@ app.use('/api/drugs', drugRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
-
-if (process.env.NODE_ENV === 'production') {
-  const frontendBuildPath = path.join(__dirname, '../../frontend/out');
-  app.use(express.static(frontendBuildPath));
-
-  // Catch-all route to support Next.js Client-Side Routing
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendBuildPath, 'index.html'));
-  });
-}
 
 app.use(notFoundHandler);
 app.use(errorHandler);
